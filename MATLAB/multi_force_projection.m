@@ -17,10 +17,6 @@ structuralProperties(model, 'YoungsModulus',E, ...
     'PoissonsRatio',nu, ...
     'MassDensity',rho);
 
-figure
-pdegplot(model, 'FaceLabels','on')
-title("Simple Plate Diagram")
-
 structuralBC(model,'Face',[5 3],'Constraint', 'fixed');
 
 % Add vertex at random point on face
@@ -28,7 +24,7 @@ vertexID = addVertex(model.Geometry, 'Coordinates', [3 0 0.3]);
 
 figure
 pdegplot(model, 'VertexLabels','on', 'FaceAlpha', 0.5)
-title("Simple Plate Diagram")
+title("Simple Plate Diagram with added vertex")
 
 structuralBoundaryLoad(model, 'Vertex', vertexID, 'Force', @multiPointForce);
 generateMesh(model);
