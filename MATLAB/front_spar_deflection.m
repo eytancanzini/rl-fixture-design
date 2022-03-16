@@ -50,8 +50,6 @@ titles = ["Distribution in X";
     "Distribution in Z"];
 
 figure
-sgt = sgtitle('Distributions of Directional Displacements');
-sgt.FontSize = 18;
 for i=1:3
     subplot(1, 3, i)
     histfit(u(:, i), 20)
