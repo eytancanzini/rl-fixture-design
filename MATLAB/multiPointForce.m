@@ -1,6 +1,6 @@
 function F = multiPointForce(location, state)
 
-    m = 100;
+    m = 7588;
     mu = 1.05;
     g = 9.81;
     a = 0;
