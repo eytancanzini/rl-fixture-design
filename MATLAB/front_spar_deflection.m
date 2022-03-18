@@ -14,7 +14,7 @@ vertexID = addVertex(model.Geometry, 'Coordinates', [0 -500 90]);
 figure
 pdegplot(model, 'FaceLabels','on')
 view(90,45)
-title('Front Spar')
+title('Front Wing Spar')
 
 E = 69E09;
 nu = 0.34;
@@ -30,13 +30,16 @@ d0=[0,0,0];
 v0=[0,0,0];
 structuralIC(model,'Displacement',d0,'Velocity',v0);
 tmax = 10;
-tlist = 0:0.1:1;
+tlist = 0:1:tmax;
 generateMesh(model);
 results = solve(model, tlist);
 
 for i = 1:numel(results.SolutionTimes)
-    pdeplot3D(model,'ColorMapData',results.Displacement.ux(:,i))
-    title(['Deflection of bridge at Time = ' num2str(results.SolutionTimes(i))]);
+    sgt = sgtitle(['Deflection of bridge at Time = ' num2str(results.SolutionTimes(i))]);
+    subplot(1,2,1)
+    pdeplot3D(model, 'ColorMapData', results.Displacement.ux(:,i))
+    subplot(1,2,2)
+    pdeplot3D(model, 'ColorMapData', results.Displacement.uz(:,i))
     pause
 end
 
