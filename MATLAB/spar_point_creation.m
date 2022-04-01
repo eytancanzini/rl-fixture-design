@@ -1,7 +1,5 @@
 %% Front Spar Deflection
 % TODO:
-% - Fix issue with the model not wanting to generate a mesh on the
-% component
 % - Add the list of points to the top surface for adding deflection
 % - Insert a random point placer to insert fixture applications
 
@@ -14,13 +12,13 @@ desired_precision = 45; % Reasonable value for number of points (320 vertices)
 arr = generateGrid(-990, -10, 20, 180, desired_precision);
 % fixtureVertices = addVertex(model.Geometry, 'Coordinates', arr);
 
-% Creating the vertices for the applied load
+% Generate the vertices for the applied load from the drilling/riveting
 drill_list = -950:50:-50;
 drill_pos = zeros(size(drill_list,2), 3);
 for i=1:size(drill_list,2)
     drill_pos(i, :) = [20 drill_list(i) 200];
 end
-drillVertices = addVertex(model.Geometry, 'Coordinates', drill_pos);
+
 
 % Generate quick figure of what the component looks like
 figure
@@ -33,21 +31,29 @@ title('Front Wing Spar')
 E = 69E09;
 nu = 0.34;
 rho = 2710;
+F_drill = rivetingForce(4e-3, 0, 3e+8);
 
 structuralProperties(model, 'YoungsModulus',E, ... 
     'PoissonsRatio',nu, ...
     'MassDensity',rho);
 structuralBC(model, "Constraint", "fixed", "Face", [3 14]);
 
-F = rivetingForce(4e-3, 0, 3e+8);
-structuralBoundaryLoad(model, 'Vertex', drillVertices(1), 'Force', [0 0 F]);
-generateMesh(model);
-results = solve(model);
+% Apply the drilling forces at each point and store the data results
+drilling_results = {};
+drilling_meshes = {};
+for i=1:size(drill_pos,1)
+    drillVertexID = addVertex(model.Geometry, 'Coordinates', drill_pos(i,:));
+    structuralBoundaryLoad(model, 'Vertex', drillVertexID, 'Force', [0 0 F_drill]);
+    drilling_meshes{i} = generateMesh(model);
+    results = solve(model);
+    drilling_results{i} = results.Displacement.z;
+end
 
-% for i=1:size(drillVertices,1)
-%     F = rivetingForce(4e-3, 0, 3e+8);
-%     structuralBoundaryLoad(model, 'Vertex', i, 'Force', [0 0 F]);
-%     generateMesh(model);
-%     results = solve(model);
-% end
+figure
+for i=1:size(drilling_results,2)
+    vals = cell2mat(drilling_results(i));
+    pdeplot3D(drilling_meshes{i},'ColorMapData',vals)
+    title(['Deflection at drilling point = ' num2str(i)]);
+    pause
+end
 
