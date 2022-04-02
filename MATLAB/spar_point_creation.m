@@ -9,7 +9,7 @@ rotate(model.Geometry, 90, [0 0 0], [1 0 0]); % Rotate the part
 
 % Creating the vertices that are used for the fixturing force
 desired_precision = 45; % Reasonable value for number of points (320 vertices)
-arr = generateGrid(-990, -10, 20, 180, desired_precision);
+fixtureVertices = generateGrid(-990, -10, 20, 180, desired_precision);
 % fixtureVertices = addVertex(model.Geometry, 'Coordinates', arr);
 
 % Generate the vertices for the applied load from the drilling/riveting.
@@ -42,15 +42,18 @@ structuralBC(model, "Constraint", "fixed", "Face", [3 14]);
 
 % Apply the drilling forces at each point and store the data results
 drilling_results_z = {};
-drilling_results_y = {};
+drilling_results_x = {};
 drilling_meshes = {};
 for i=1:size(drill_pos,1)
-    drillVertexID = addVertex(model.Geometry, 'Coordinates', drill_pos(i,:));
-    structuralBoundaryLoad(model, 'Vertex', drillVertexID, 'Force', [0 0 F_drill]);
-    drilling_meshes{i} = generateMesh(model);
-    results = solve(model);
+    temp_model = model;
+    fixtureVertexID = addVertex(temp_model.Geometry, "Coordinates", fixtureVertices(i,:));
+    drillVertexID = addVertex(temp_model.Geometry, 'Coordinates', drill_pos(i,:));
+    structuralBoundaryLoad(temp_model, 'Vertex', drillVertexID, 'Force', [0 0 F_drill]);
+    structuralBoundaryLoad(temp_model, 'Vertex',fixtureVertexID, 'Force', @multiPointForce);
+    drilling_meshes{i} = generateMesh(temp_model);
+    results = solve(temp_model);
     drilling_results_z{i} = results.Displacement.z;
-    drilling_results_y{i} = results.Displacement.y;
+    drilling_results_x{i} = results.Displacement.x;
 end
 
 % Plot the deflection in the y and z directions to observe the impact of
@@ -58,7 +61,7 @@ end
 figure
 for i=1:size(drilling_results_z,2)
     vals_z = cell2mat(drilling_results_z(i));
-    vals_y = cell2mat(drilling_results_y(i));
+    vals_y = cell2mat(drilling_results_x(i));
     subplot(1,2,1)
     pdeplot3D(drilling_meshes{i},'ColorMapData',vals_z)
     title('Z-direction Displacement (m)')
