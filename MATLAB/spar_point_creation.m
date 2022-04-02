@@ -12,7 +12,8 @@ desired_precision = 45; % Reasonable value for number of points (320 vertices)
 arr = generateGrid(-990, -10, 20, 180, desired_precision);
 % fixtureVertices = addVertex(model.Geometry, 'Coordinates', arr);
 
-% Generate the vertices for the applied load from the drilling/riveting
+% Generate the vertices for the applied load from the drilling/riveting.
+% These have to be added to the model during the PDE calculation
 drill_list = -950:50:-50;
 drill_pos = zeros(size(drill_list,2), 3);
 for i=1:size(drill_list,2)
@@ -26,6 +27,7 @@ pdegplot(model, 'VertexLabels','on', 'FaceAlpha', 0.5)
 view(225,30) 
 title('Front Wing Spar')
 % saveas(gcf, '../images/pde-plot-item.png')
+pause
 
 % Set the material parameters and the boundary constraints
 E = 69E09;
@@ -39,21 +41,31 @@ structuralProperties(model, 'YoungsModulus',E, ...
 structuralBC(model, "Constraint", "fixed", "Face", [3 14]);
 
 % Apply the drilling forces at each point and store the data results
-drilling_results = {};
+drilling_results_z = {};
+drilling_results_y = {};
 drilling_meshes = {};
 for i=1:size(drill_pos,1)
     drillVertexID = addVertex(model.Geometry, 'Coordinates', drill_pos(i,:));
     structuralBoundaryLoad(model, 'Vertex', drillVertexID, 'Force', [0 0 F_drill]);
     drilling_meshes{i} = generateMesh(model);
     results = solve(model);
-    drilling_results{i} = results.Displacement.z;
+    drilling_results_z{i} = results.Displacement.z;
+    drilling_results_y{i} = results.Displacement.y;
 end
 
+% Plot the deflection in the y and z directions to observe the impact of
+% the drilling and fixturing forces
 figure
-for i=1:size(drilling_results,2)
-    vals = cell2mat(drilling_results(i));
-    pdeplot3D(drilling_meshes{i},'ColorMapData',vals)
-    title(['Deflection at drilling point = ' num2str(i)]);
+for i=1:size(drilling_results_z,2)
+    vals_z = cell2mat(drilling_results_z(i));
+    vals_y = cell2mat(drilling_results_y(i));
+    subplot(1,2,1)
+    pdeplot3D(drilling_meshes{i},'ColorMapData',vals_z)
+    title('Z-direction Displacement (m)')
+    subplot(1,2,2)
+    pdeplot3D(drilling_meshes{i}, 'ColorMapData', vals_y)
+    title('Y-direction Displacement (m)')
+    sgtitle(['Deformation at drilling point = ' num2str(i)]);
     pause
 end
 
