@@ -20,7 +20,6 @@ for i=1:size(drill_list,2)
     drill_pos(i, :) = [20 drill_list(i) 200];
 end
 
-
 % Generate quick figure of what the component looks like
 figure
 pdegplot(model, 'VertexLabels','on', 'FaceAlpha', 0.5)
@@ -44,14 +43,16 @@ structuralBC(model, "Constraint", "fixed", "Face", [3 14]);
 drilling_results_z = {};
 drilling_results_x = {};
 drilling_meshes = {};
-for i=1:size(drill_pos,1)
+for i=1:size(drill_pos, 1)
     temp_model = model;
     fixtureVertexID = addVertex(temp_model.Geometry, "Coordinates", fixtureVertices(i,:));
     drillVertexID = addVertex(temp_model.Geometry, 'Coordinates', drill_pos(i,:));
     structuralBoundaryLoad(temp_model, 'Vertex', drillVertexID, 'Force', [0 0 F_drill]);
-    structuralBoundaryLoad(temp_model, 'Vertex',fixtureVertexID, 'Force', @multiPointForce);
+    structuralBoundaryLoad(temp_model, 'Vertex',fixtureVertexID, 'Force', calculateMagneticForce(0.4, 'x'));
     drilling_meshes{i} = generateMesh(temp_model);
     results = solve(temp_model);
+    X = sprintf('Drilling Position = %d || Fixture Position = %d', i, fixtureVertexID);
+    disp(X)
     drilling_results_z{i} = results.Displacement.z;
     drilling_results_x{i} = results.Displacement.x;
 end
