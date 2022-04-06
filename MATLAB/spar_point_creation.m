@@ -10,7 +10,6 @@ rotate(model.Geometry, 90, [0 0 0], [1 0 0]); % Rotate the part
 % Creating the vertices that are used for the fixturing force
 desired_precision = 45; % Reasonable value for number of points (320 vertices)
 fixtureVertices = generateGrid(-990, -10, 20, 180, desired_precision);
-% fixtureVertices = addVertex(model.Geometry, 'Coordinates', arr);
 
 % Generate the vertices for the applied load from the drilling/riveting.
 % These have to be added to the model during the PDE calculation
@@ -45,7 +44,7 @@ drilling_results_x = {};
 drilling_meshes = {};
 for i=1:size(drill_pos, 1)
     temp_model = model;
-    fixtureVertexID = addVertex(temp_model.Geometry, "Coordinates", fixtureVertices(i,:));
+    fixtureVertexID = addVertex(temp_model.Geometry, "Coordinates", fixtureVertices(randi([1 147]),:));
     drillVertexID = addVertex(temp_model.Geometry, 'Coordinates', drill_pos(i,:));
     structuralBoundaryLoad(temp_model, 'Vertex', drillVertexID, 'Force', [0 0 F_drill]);
     structuralBoundaryLoad(temp_model, 'Vertex',fixtureVertexID, 'Force', calculateMagneticForce(0.4, 'x'));
