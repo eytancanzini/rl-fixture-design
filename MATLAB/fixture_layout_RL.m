@@ -30,6 +30,8 @@ drilling_meshes = {};
 % the State-Action-Reward-State-Action (SARSA) as it has a discrete action
 % space and a continous observation space.
 
+average_value = 0; % Average value across the entire mesh for the stresses, can be supplied as the ensemble average(?)
+
 %% Train the policy
 % The policy is trained for a certain number of episodes. In each episode,
 % the drill position is applied for a set number of iterations (here marked
