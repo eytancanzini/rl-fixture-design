@@ -14,8 +14,8 @@ fixtureVertices = generateGrid(-990, -10, 20, 180, 20, 10);
 % These have to be added to the model during the PDE calculation
 drill_list = -950:50:-50;
 drill_pos = zeros(size(drill_list,2), 3);
-for i=1:size(drill_list,2)
-    drill_pos(i, :) = [20 drill_list(i) 200];
+for idx=1:size(drill_list,2)
+    drill_pos(idx, :) = [20 drill_list(idx) 200];
 end
 
 % Generate quick figure of what the component looks like
@@ -41,34 +41,47 @@ structuralBC(model, "Constraint", "fixed", "Face", [3 14]);
 drilling_results_z = {};
 drilling_results_x = {};
 drilling_meshes = {};
-for i=1:size(drill_pos, 1)
+for idx=1:size(drill_pos, 1)
     temp_model = model;
     int = randi([1 100]);
     fixtureVertexID = addVertex(temp_model.Geometry, "Coordinates", fixtureVertices(int,:));
-    drillVertexID = addVertex(temp_model.Geometry, 'Coordinates', drill_pos(i,:));
+    drillVertexID = addVertex(temp_model.Geometry, 'Coordinates', drill_pos(idx,:));
     structuralBoundaryLoad(temp_model, 'Vertex', drillVertexID, 'Force', [0 0 F_drill]);
     structuralBoundaryLoad(temp_model, 'Vertex',fixtureVertexID, 'Force', calculateMagneticForce(0.4, 'x'));
-    X = sprintf('Drilling Position = %d || Fixture Position = (%d, %d, %d)', i, fixtureVertices(int, 1), fixtureVertices(int, 2), fixtureVertices(int, 3));
+    X = sprintf('Drilling Position = %d || Fixture Position = (%d, %d, %d)', idx, fixtureVertices(int, 1), fixtureVertices(int, 2), fixtureVertices(int, 3));
     disp(X)
-    drilling_meshes{i} = generateMesh(temp_model);
+    drilling_meshes{idx} = generateMesh(temp_model);
     results = solve(temp_model);
-    drilling_results_z{i} = results.Displacement.z;
-    drilling_results_x{i} = results.Displacement.x;
+    drilling_results_z{idx} = results.Displacement.z;
+    drilling_results_x{idx} = results.Displacement.x;
 end
 
 % Plot the deflection in the y and z directions to observe the impact of
 % the drilling and fixturing forces
-figure
-for i=1:size(drilling_results_z,2)
-    vals_z = cell2mat(drilling_results_z(i));
-    vals_y = cell2mat(drilling_results_x(i));
+
+nImages = 19;
+fileName = "testAnimated.gif";
+
+fig = figure;
+fig.Position = [100 100 1080 800];
+for idx=1:size(drilling_results_z,2)
+    vals_z = cell2mat(drilling_results_z(idx));
+    vals_y = cell2mat(drilling_results_x(idx));
     subplot(1,2,1)
-    pdeplot3D(drilling_meshes{i},'ColorMapData',vals_z)
+    pdeplot3D(drilling_meshes{idx},'ColorMapData',vals_z)
     title('Z-direction Displacement (m)')
     subplot(1,2,2)
-    pdeplot3D(drilling_meshes{i}, 'ColorMapData', vals_y)
+    pdeplot3D(drilling_meshes{idx}, 'ColorMapData', vals_y)
     title('Y-direction Displacement (m)')
-    sgtitle(['Deformation at drilling point = ' num2str(i)]);
-    pause
+    sgtitle(['Deformation at drilling point = ' num2str(idx)]);
+    drawnow
+    frame = getframe(fig);
+    im{idx} = frame2im(frame);
+    [A, map] = rgb2ind(im{idx}, 256);
+    if idx == 1
+        imwrite(A, map, fileName, 'gif', "LoopCount", Inf, "DelayTime", 1);
+    else
+        imwrite(A, map, fileName, 'gif', "WriteMode", "append", "DelayTime", 1);
+    end
 end
 
