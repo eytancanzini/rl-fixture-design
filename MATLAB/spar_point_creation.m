@@ -74,14 +74,14 @@ for idx=1:size(drilling_results_z,2)
     pdeplot3D(drilling_meshes{idx}, 'ColorMapData', vals_y)
     title('Y-direction Displacement (m)')
     sgtitle(['Deformation at drilling point = ' num2str(idx)]);
-    drawnow
-    frame = getframe(fig);
-    im{idx} = frame2im(frame);
-    [A, map] = rgb2ind(im{idx}, 256);
-    if idx == 1
-        imwrite(A, map, fileName, 'gif', "LoopCount", Inf, "DelayTime", 1);
-    else
-        imwrite(A, map, fileName, 'gif', "WriteMode", "append", "DelayTime", 1);
-    end
+%     drawnow
+%     frame = getframe(fig);
+%     im{idx} = frame2im(frame);
+%     [A, map] = rgb2ind(im{idx}, 256);
+%     if idx == 1
+%         imwrite(A, map, fileName, 'gif', "LoopCount", Inf, "DelayTime", 1);
+%     else
+%         imwrite(A, map, fileName, 'gif', "WriteMode", "append", "DelayTime", 1);
+%     end
 end
 
