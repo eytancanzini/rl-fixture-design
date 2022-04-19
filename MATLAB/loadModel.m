@@ -8,13 +8,6 @@ model = createpde('structural', 'static-solid');
 importGeometry(model, path);
 rotate(model.Geometry, 90, [0 0 0], [1 0 0]); % Rotate the part
 
-% Generate quick figure of what the component looks like
-figure
-pdegplot(model, 'VertexLabels','on', 'FaceAlpha', 0.5)
-view(225,30) 
-title('Front Wing Spar')
-pause
-
 % Set the material parameters and the boundary constraints
 E = 69E09;
 nu = 0.34;
