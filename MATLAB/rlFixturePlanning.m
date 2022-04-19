@@ -1,11 +1,18 @@
 classdef rlFixturePlanning < rl.env.MATLABEnvironment
-    %MYENVCLASS: Template for defining custom environment in MATLAB. 
+    % Class for defining new fixture planning 
     % To-Do:
-    % - FIX THE ENTIRE SCRIPT TO MAKE IT WORK
+    % - Fix the observation and state functions
+    % - Setup the action and reward functions
     
     %% Properties (set properties' attributes accordingly)
     properties
-        % Specify and initialize environment's necessary properties    
+        % Specify and initialize environment's necessary properties 
+        drill_list = -950:50:-50;
+        drillingVertices = drillingVerticesGenerator(drill_list);
+
+        % Set some parameters for timestepping
+        timestep = 1; % Each hole is performed for 100 timesteps
+        State = 1; % State refers to the hole being drilled
         
         % Distance at which to fail the episode
         DisplacementThreshold = 1e-3;
@@ -20,18 +27,22 @@ classdef rlFixturePlanning < rl.env.MATLABEnvironment
     methods              
         % Contructor method creates an instance of the environment
         % Change class name and constructor name accordingly
-        function this = rlFixturePlanning()
-            % Initialize Observation settings
-            ObservationInfo = rlNumericSpec([4 1]);
-            ObservationInfo.Name = 'CartPole States';
-            ObservationInfo.Description = 'x, dx, theta, dtheta';
+        function this = rlFixturePlanning(file_addr)
+            % Initialize FEA PDE model
+            model = loadModel(file_addr);            
             
-            % Initialize Action settings   
-            ActionInfo = rlFiniteSetSpec([-1 1]);
-            ActionInfo.Name = 'CartPole Action';
+            % Initialise observation states
+            obsInfo = rlNumericSpec([1 1]);
+            obsInfo.Name = 'Observation States';
+            obsInfo.Description = 'Vector of observation states. Current just a single observation';
+            
+            % Initialize Action settings  
+            fixtureVertices = num2cell(generateGrid(-990, -20, 10, 180, 20, 10), 2);
+            actInfo = rlFiniteSetSpec(fixtureVertices);
+            actInfo.Name = 'Fixture Position Action';
             
             % The following line implements built-in functions of RL env
-            this = this@rl.env.MATLABEnvironment(ObservationInfo,ActionInfo);
+            this = this@rl.env.MATLABEnvironment(obsInfo,actInfo);
             
             % Initialize property values and pre-compute necessary values
             updateActionInfo(this);
@@ -42,25 +53,14 @@ classdef rlFixturePlanning < rl.env.MATLABEnvironment
         function [Observation,Reward,IsDone,LoggedSignals] = step(this,Action)
             LoggedSignals = [];
             
-            % Get action
-            Force = getForce(this,Action);            
-            
-            % Unpack state vector
-            XDot = this.State(2);
-            Theta = this.State(3);
-            ThetaDot = this.State(4);
-            
-            % Cache to avoid recomputation
-            CosTheta = cos(Theta);
-            SinTheta = sin(Theta);            
-            SystemMass = this.CartMass + this.PoleMass;
-            temp = (Force + this.PoleMass*this.HalfPoleLength * ThetaDot^2 * SinTheta) / SystemMass;
+            % Get action for this timestep
+            fixtureLocation = getForce(this,Action);            
 
             % Apply motion equations            
             ThetaDotDot = (this.Gravity * SinTheta - CosTheta* temp) / (this.HalfPoleLength * (4.0/3.0 - this.PoleMass * CosTheta * CosTheta / SystemMass));
             XDotDot  = temp - this.PoleMass*this.HalfPoleLength * ThetaDotDot * CosTheta / SystemMass;
             
-            % Euler integration
+            % Generate the observation of the system
             Observation = this.State + this.Ts.*[XDot;XDotDot;ThetaDot;ThetaDotDot];
 
             % Update system states
@@ -131,54 +131,6 @@ classdef rlFixturePlanning < rl.env.MATLABEnvironment
             envUpdatedCallback(this)
         end
         
-        % (optional) Properties validation through set methods
-        function set.State(this,state)
-            validateattributes(state,{'numeric'},{'finite','real','vector','numel',4},'','State');
-            this.State = double(state(:));
-            notifyEnvUpdated(this);
-        end
-        function set.HalfPoleLength(this,val)
-            validateattributes(val,{'numeric'},{'finite','real','positive','scalar'},'','HalfPoleLength');
-            this.HalfPoleLength = val;
-            notifyEnvUpdated(this);
-        end
-        function set.Gravity(this,val)
-            validateattributes(val,{'numeric'},{'finite','real','positive','scalar'},'','Gravity');
-            this.Gravity = val;
-        end
-        function set.CartMass(this,val)
-            validateattributes(val,{'numeric'},{'finite','real','positive','scalar'},'','CartMass');
-            this.CartMass = val;
-        end
-        function set.PoleMass(this,val)
-            validateattributes(val,{'numeric'},{'finite','real','positive','scalar'},'','PoleMass');
-            this.PoleMass = val;
-        end
-        function set.MaxForce(this,val)
-            validateattributes(val,{'numeric'},{'finite','real','positive','scalar'},'','MaxForce');
-            this.MaxForce = val;
-            updateActionInfo(this);
-        end
-        function set.Ts(this,val)
-            validateattributes(val,{'numeric'},{'finite','real','positive','scalar'},'','Ts');
-            this.Ts = val;
-        end
-        function set.AngleThreshold(this,val)
-            validateattributes(val,{'numeric'},{'finite','real','positive','scalar'},'','AngleThreshold');
-            this.AngleThreshold = val;
-        end
-        function set.DisplacementThreshold(this,val)
-            validateattributes(val,{'numeric'},{'finite','real','positive','scalar'},'','DisplacementThreshold');
-            this.DisplacementThreshold = val;
-        end
-        function set.RewardForNotFalling(this,val)
-            validateattributes(val,{'numeric'},{'real','finite','scalar'},'','RewardForNotFalling');
-            this.RewardForNotFalling = val;
-        end
-        function set.PenaltyForFalling(this,val)
-            validateattributes(val,{'numeric'},{'real','finite','scalar'},'','PenaltyForFalling');
-            this.PenaltyForFalling = val;
-        end
     end
     
     methods (Access = protected)
