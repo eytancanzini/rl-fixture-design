@@ -82,17 +82,10 @@ classdef rlFixturePlanning < rl.env.MATLABEnvironment
         
         % Reset environment to initial state and output initial observation
         function InitialObservation = reset(this)
-            % Theta (+- .05 rad)
-            T0 = 2 * 0.05 * rand - 0.05;  
-            % Thetadot
-            Td0 = 0;
-            % X 
-            X0 = 0;
-            % Xdot
-            Xd0 = 0;
+            this.timestep = 1;
+            this.State = 1;
             
             InitialObservation = [X0;Xd0;T0;Td0];
-            this.State = InitialObservation;
             
             % (optional) use notifyEnvUpdated to signal that the 
             % environment has been updated (e.g. to update visualization)
