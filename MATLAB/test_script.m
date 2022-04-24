@@ -14,7 +14,7 @@ d0=[0,0,0];
 v0=[0,0,0];
 structuralIC(model,'Displacement',d0,'Velocity',v0);
 t_max = 20;
-tlist=0:0.1:t_max; 
+tlist=0:1:t_max; 
 structuralResults=solve(model,tlist);
 
 for i = 1:numel(structuralResults.SolutionTimes)

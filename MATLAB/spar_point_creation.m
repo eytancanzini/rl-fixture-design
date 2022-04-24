@@ -41,7 +41,7 @@ structuralBC(model, "Constraint", "fixed", "Face", [3 14]);
 drilling_results_z = {};
 drilling_results_x = {};
 drilling_meshes = {};
-for idx=1:size(drill_pos, 1)
+for idx=1:size(drill_pos, 2)
     temp_model = model;
     int = randi([1 100]);
     fixtureVertexID = addVertex(temp_model.Geometry, "Coordinates", fixtureVertices(int,:));

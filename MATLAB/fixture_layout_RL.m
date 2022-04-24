@@ -10,25 +10,76 @@
 % the State-Action-Reward-State-Action (SARSA) as it has a discrete action
 % space and a continous observation space.
 
-% Generate the action space
-actInfo = rlFiniteSetSpec(fixtureVertices);
+% Create an environment variable
+model_env = rlFixturePlanning();
 
-% Provide the observation space
+% Create the observation and action spaces
 obsInfo = rlNumericSpec([1 1]);
-obsInfo.Name = 'observations';
+actInfo = rlFiniteSetSpec(linspace(1, 100, 100));
 
-% Define the environment (need to add reset and step functions here)
-env = rlFunctionEnv( ...
-    obsInfo, actInfo, ...
-    @myStepFunction);
+% Create the critic neural network for the Q-agent
+% Create the observation path
+obsPath = [
+    featureInputLayer(1, 'Name', 'obs')
+    fullyConnectedLayer(50, 'Name', 'hiddenobs')
+    reluLayer("Name", 'reluobs')
+    fullyConnectedLayer(50, 'Name', 'fcobs')
+];
 
+% Create the action path
+actPath = [
+    featureInputLayer(1, 'Name', 'act')
+    fullyConnectedLayer(50, 'Name', 'hiddenact')
+    reluLayer("Name", 'reluact')
+    fullyConnectedLayer(50, 'Name', 'fcact')
+];
+
+% Link the paths together
+joinedPath = [
+    additionLayer(2, 'Name', 'add')
+    reluLayer('Name', 'relu')
+    fullyConnectedLayer(1, 'Name', 'fc')
+];
+
+net = layerGraph(obsPath);
+net = addLayers(net, actPath);
+net = addLayers(net, joinedPath);
+
+% Connect the layers
+net = connectLayers(net, 'fcobs', 'add/in1');
+net = connectLayers(net, 'fcact', 'add/in2');
+
+% Initialise the Q-agent
+repopts = rlRepresentationOptions( ...
+    "LearnRate", 0.001, "GradientThreshold", 1);
+opts = rlQAgentOptions( ...
+    "DiscountFactor", 1);
+opts.EpsilonGreedyExploration.EpsilonDecay = 0.001;
+critic = rlQValueRepresentation( ...
+    net, obsInfo, actInfo, ...
+    'Observation', 'obs', 'Action', 'act', ...
+    repopts);
+
+agent = rlQAgent(critic, opts);
 
 %% Train the policy
 % The policy is trained for a certain number of episodes. In each episode,
 % the drill position is applied for a set number of iterations (here marked
 % for 10, leading to 190 timesteps). The problem is considered 'solved' if
 % the algorithm lasts until the 
-num_episodes = 100;
-num_iterations = 10;
+
+x = "Press 'Enter' to begin training the agent";
+disp(x)
+pause
+
+opt = rlTrainingOptions(...
+    'MaxEpisodes',50,...
+    'MaxStepsPerEpisode',100,...
+    'StopTrainingCriteria',"AverageReward",...
+    'StopTrainingValue',480);
+
+results = train(agent, model_env, opt);
+
+
 
 
