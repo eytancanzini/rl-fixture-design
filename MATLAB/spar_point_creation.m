@@ -12,7 +12,7 @@ fixtureVertices = generateGrid(-990, -10, 20, 180, 20, 10);
 
 % Generate the vertices for the applied load from the drilling/riveting.
 % These have to be added to the model during the PDE calculation
-drill_list = -950:50:-50;
+drill_list = linspace(-950, -50, 100);
 drill_pos = zeros(size(drill_list,2), 3);
 for idx=1:size(drill_list,2)
     drill_pos(idx, :) = [20 drill_list(idx) 200];
@@ -41,7 +41,7 @@ structuralBC(model, "Constraint", "fixed", "Face", [3 14]);
 drilling_results_z = {};
 drilling_results_x = {};
 drilling_meshes = {};
-for idx=1:size(drill_pos, 2)
+for idx=1:size(drill_pos, 1)
     temp_model = model;
     int = randi([1 100]);
     fixtureVertexID = addVertex(temp_model.Geometry, "Coordinates", fixtureVertices(int,:));
@@ -74,6 +74,7 @@ for idx=1:size(drilling_results_z,2)
     pdeplot3D(drilling_meshes{idx}, 'ColorMapData', vals_y)
     title('Y-direction Displacement (m)')
     sgtitle(['Deformation at drilling point = ' num2str(idx)]);
+    pause
 %     drawnow
 %     frame = getframe(fig);
 %     im{idx} = frame2im(frame);
