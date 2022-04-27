@@ -91,6 +91,7 @@ classdef rlFixturePlanning < rl.env.MATLABEnvironment
         function InitialObservation = reset(this)
             this.timestep = 1;
             this.State = 1;
+            this.ResidualStresses = 0;
 
             InitialObservation = 0;
             
@@ -110,6 +111,8 @@ classdef rlFixturePlanning < rl.env.MATLABEnvironment
             end
 
             temp_model = this.model;
+            str = sprintf('Action taken: %d\n', action);
+            disp(str)
             fixtureVertexID = addVertex(temp_model.Geometry, "Coordinates", cell2mat(this.fixtureVertices ...
                 (action)));
             drillVertexID = addVertex(temp_model.Geometry, 'Coordinates', vertices(State,:));
