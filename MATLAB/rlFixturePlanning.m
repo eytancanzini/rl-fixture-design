@@ -1,11 +1,11 @@
 classdef rlFixturePlanning < rl.env.MATLABEnvironment
     % Class for defining new fixture planning 
     % To-Do:
-    % - Fix the step() function not recognising the proper variable types
     % - Change the observation matrix to include the state (drilling hole)
     % and the stress in the direction
     % - Implement a different RL policy - PPO or SARSA seem good, both can
     % deal with discrete action spaces and continuous observation spaces
+    % - Change the reward function to be more discrete
     
     %% Properties (set properties' attributes accordingly)
     properties
@@ -71,7 +71,7 @@ classdef rlFixturePlanning < rl.env.MATLABEnvironment
             Observation = mean(Displacement);
 
             % Update system states. This moves the drilling position to the
-            % next frame
+            % next frame along the path
             this.State = this.State+1;
             
             % Check terminal condition
@@ -111,8 +111,7 @@ classdef rlFixturePlanning < rl.env.MATLABEnvironment
             end
 
             temp_model = this.model;
-            str = sprintf('Action taken: %d\n', action);
-            disp(str)
+            fprintf('Action taken: %d\n', action)
             fixtureVertexID = addVertex(temp_model.Geometry, "Coordinates", cell2mat(this.fixtureVertices ...
                 (action)));
             drillVertexID = addVertex(temp_model.Geometry, 'Coordinates', vertices(State,:));
@@ -132,8 +131,8 @@ classdef rlFixturePlanning < rl.env.MATLABEnvironment
 
                 x = mu_obs*10000;
                 y = std_obs*10000;
-
                 Reward = exp(-8*x^2) + exp(-3*y);
+                disp(Reward)
             else
                 Reward = this.PenaltyForFailing;
             end          
