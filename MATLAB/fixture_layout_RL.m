@@ -14,13 +14,13 @@
 model_env = rlFixturePlanning();
 
 % Create the observation and action spaces
-obsInfo = rlNumericSpec([1 1]);
+obsInfo = rlNumericSpec([3 1]);
 actInfo = rlFiniteSetSpec(linspace(1, 100, 100));
 
 % Create the critic neural network for the Q-agent
 % Create the observation path
 obsPath = [
-    featureInputLayer(1, 'Name', 'obs')
+    featureInputLayer(3, 'Name', 'obs')
     fullyConnectedLayer(100, 'Name', 'hiddenobs')
     reluLayer("Name", 'reluobs')
     fullyConnectedLayer(100, 'Name', 'fcobs')
@@ -73,8 +73,8 @@ disp(x)
 pause
 
 opt = rlTrainingOptions(...
-    'MaxEpisodes',10,...
-    'MaxStepsPerEpisode',100,...
+    'MaxEpisodes',2,...
+    'MaxStepsPerEpisode',15,...
     'StopTrainingCriteria',"AverageReward",...
     'StopTrainingValue',480);
 

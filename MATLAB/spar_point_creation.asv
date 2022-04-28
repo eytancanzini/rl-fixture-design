@@ -18,13 +18,13 @@ for idx=1:size(drill_list,2)
     drill_pos(idx, :) = [20 drill_list(idx) 200];
 end
 
-% % Generate quick figure of what the component looks like
-% figure
-% pdegplot(model, 'VertexLabels','on', 'FaceAlpha', 0.5)
-% view(225,30) 
-% title('Front Wing Spar')
-% % saveas(gcf, '../images/pde-plot-item.png')
-% pause
+% Generate quick figure of what the component looks like
+figure
+pdegplot(model, 'VertexLabels','on', 'FaceAlpha', 0.5)
+view(225,30) 
+title('Front Wing Spar')
+% saveas(gcf, '../images/pde-plot-item.png')
+pause
 
 % Set the material parameters and the boundary constraints
 E = 69E09;
@@ -56,9 +56,9 @@ for idx=1:size(drill_pos, 1)
     drilling_results_x{idx} = results.Displacement.x;
 end
 
-max_vals_z = zeros(50,1);
-max_vals_x = zeros(50,1);
-for i=1:50
+max_vals_z = zeros(100,1);
+max_vals_x = zeros(100,1);
+for i=1:100
     max_vals_z(i) = max(drilling_results_z{i});
     max_vals_x(i) = max(drilling_results_x{i});
 end
