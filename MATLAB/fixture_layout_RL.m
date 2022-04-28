@@ -17,37 +17,52 @@ model_env = rlFixturePlanning();
 obsInfo = rlNumericSpec([3 1]);
 actInfo = rlFiniteSetSpec(linspace(1, 100, 100));
 
-% Create the critic neural network for the Q-agent
-% Create the observation path
-obsPath = [
-    featureInputLayer(3, 'Name', 'obs')
-    fullyConnectedLayer(100, 'Name', 'hiddenobs')
-    reluLayer("Name", 'reluobs')
-    fullyConnectedLayer(100, 'Name', 'fcobs')
-];
+nI = obsInfo.Dimension(1);
+nL = 100;
+nO = numel(actInfo.Elements);
 
-% Create the action path
-actPath = [
-    featureInputLayer(1, 'Name', 'act')
-    fullyConnectedLayer(100, 'Name', 'hiddenact')
-    reluLayer("Name", 'reluact')
-    fullyConnectedLayer(100, 'Name', 'fcact')
-];
+% Create a deep neural network that is used as the function approximation
+% for the Q-learning function
+dnn = [
+    featureInputLayer(nI,'Normalization','none','Name','state')
+    fullyConnectedLayer(nL,'Name','fc1')
+    reluLayer('Name','relu1')
+    fullyConnectedLayer(nL,'Name','fc2')
+    reluLayer('Name','relu2')
+    fullyConnectedLayer(nO,'Name','fc3')];
+net = dlnetwork(dnn);
 
-% Link the paths together
-joinedPath = [
-    additionLayer(2, 'Name', 'add')
-    reluLayer('Name', 'relu')
-    fullyConnectedLayer(1, 'Name', 'fc')
-];
-
-net = layerGraph(obsPath);
-net = addLayers(net, actPath);
-net = addLayers(net, joinedPath);
-
-% Connect the layers
-net = connectLayers(net, 'fcobs', 'add/in1');
-net = connectLayers(net, 'fcact', 'add/in2');
+% % Create the critic neural network for the Q-agent
+% % Create the observation path
+% obsPath = [
+%     featureInputLayer(3, 'Name', 'obs')
+%     fullyConnectedLayer(100, 'Name', 'hiddenobs')
+%     reluLayer("Name", 'reluobs')
+%     fullyConnectedLayer(100, 'Name', 'fcobs')
+% ];
+% 
+% % Create the action path
+% actPath = [
+%     featureInputLayer(1, 'Name', 'act')
+%     fullyConnectedLayer(100, 'Name', 'hiddenact')
+%     reluLayer("Name", 'reluact')
+%     fullyConnectedLayer(100, 'Name', 'fcact')
+% ];
+% 
+% % Link the paths together
+% joinedPath = [
+%     additionLayer(2, 'Name', 'add')
+%     reluLayer('Name', 'relu')
+%     fullyConnectedLayer(1, 'Name', 'fc')
+% ];
+% 
+% net = layerGraph(obsPath);
+% net = addLayers(net, actPath);
+% net = addLayers(net, joinedPath);
+% 
+% % Connect the layers
+% net = connectLayers(net, 'fcobs', 'add/in1');
+% net = connectLayers(net, 'fcact', 'add/in2');
 
 % Initialise the Q-agent
 repopts = rlRepresentationOptions( ...
@@ -55,10 +70,9 @@ repopts = rlRepresentationOptions( ...
 opts = rlQAgentOptions( ...
     "DiscountFactor", 1);
 opts.EpsilonGreedyExploration.EpsilonDecay = 0.001;
-critic = rlQValueRepresentation( ...
+critic = rlVectorQValueFunction( ...
     net, obsInfo, actInfo, ...
-    'Observation', 'obs', 'Action', 'act', ...
-    repopts);
+    'Observation', 'state');
 
 agent = rlQAgent(critic, opts);
 
