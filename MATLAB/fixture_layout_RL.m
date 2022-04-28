@@ -21,17 +21,17 @@ actInfo = rlFiniteSetSpec(linspace(1, 100, 100));
 % Create the observation path
 obsPath = [
     featureInputLayer(1, 'Name', 'obs')
-    fullyConnectedLayer(50, 'Name', 'hiddenobs')
+    fullyConnectedLayer(100, 'Name', 'hiddenobs')
     reluLayer("Name", 'reluobs')
-    fullyConnectedLayer(50, 'Name', 'fcobs')
+    fullyConnectedLayer(100, 'Name', 'fcobs')
 ];
 
 % Create the action path
 actPath = [
     featureInputLayer(1, 'Name', 'act')
-    fullyConnectedLayer(50, 'Name', 'hiddenact')
+    fullyConnectedLayer(100, 'Name', 'hiddenact')
     reluLayer("Name", 'reluact')
-    fullyConnectedLayer(50, 'Name', 'fcact')
+    fullyConnectedLayer(100, 'Name', 'fcact')
 ];
 
 % Link the paths together

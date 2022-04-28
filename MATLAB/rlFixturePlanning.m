@@ -127,11 +127,16 @@ classdef rlFixturePlanning < rl.env.MATLABEnvironment
         function Reward = getReward(this, obs)
             if ~this.IsDone
                 mu_obs = mean(obs);
-                std_obs = std(obs);
+%                 std_obs = std(obs);
 
-                x = mu_obs*10000;
-                y = std_obs*10000;
-                Reward = exp(-8*x^2) + exp(-3*y);
+%                 x = mu_obs*10000;
+%                 y = std_obs*10000;
+%                 Reward = exp(-8*x^2) + exp(-3*y);
+                if mu_obs < this.DisplacementThreshold
+                    Reward = 1;
+                else
+                    Reward = this.DisplacementThreshold/mu_obs;
+                end
                 disp(Reward)
             else
                 Reward = this.PenaltyForFailing;
