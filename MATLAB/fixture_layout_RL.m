@@ -18,7 +18,7 @@ obsInfo = rlNumericSpec([3 1]);
 actInfo = rlFiniteSetSpec(linspace(1, 100, 100));
 
 nI = obsInfo.Dimension(1);
-nL = 100;
+nL = 24;
 nO = numel(actInfo.Elements);
 
 % Create a deep neural network that is used as the function approximation
@@ -65,29 +65,29 @@ net = dlnetwork(dnn);
 % net = connectLayers(net, 'fcact', 'add/in2');
 
 % Initialise the Q-agent
-repopts = rlRepresentationOptions( ...
-    "LearnRate", 0.001, "GradientThreshold", 1);
-opts = rlQAgentOptions( ...
-    "DiscountFactor", 1);
-opts.EpsilonGreedyExploration.EpsilonDecay = 0.001;
+% repopts = rlRepresentationOptions( ...
+%     "LearnRate", 0.001, "GradientThreshold", 1, 'UseDevice', 'gpu');
 critic = rlVectorQValueFunction( ...
     net, obsInfo, actInfo, ...
-    'Observation', 'state');
+    'Observation', 'state', UseDevice='gpu');
 
-agent = rlQAgent(critic, opts);
+opts = rlDQNAgentOptions( ...
+    "DiscountFactor", 1);
+opts.EpsilonGreedyExploration.EpsilonDecay = 0.001;
+agent = rlDQNAgent(critic, opts);
 
 %% Train the policy
 % The policy is trained for a certain number of episodes. In each episode,
 % the drill position is applied for a set number of iterations (here marked
-% for 10, leading to 190 timesteps). The problem is considered 'solved' if
-% the algorithm lasts until the 
+% for 100). If the residual stresses have not been exceeded, the episode
+% starts again
 
 x = "Press 'Enter' to begin training the agent";
 disp(x)
 pause
 
-opt = rlTrainingOptions(...
-    'MaxEpisodes',2,...
+opt = rlTrainingOptions(...clear
+    'MaxEpisodes',10,...
     'MaxStepsPerEpisode',100,...
     'StopTrainingCriteria',"AverageReward",...
     'StopTrainingValue',480);

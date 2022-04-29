@@ -10,7 +10,7 @@ classdef rlFixturePlanning < rl.env.MATLABEnvironment
     %% Properties (set properties' attributes accordingly)
     properties
         % Specify and initialize environment's necessary properties 
-        drillList = linspace(-950, 50, 100)
+        drillList = linspace(-990, -10, 100)
 
         % Set some parameters for timestepping
         timestep = 1 % Each hole is performed for 100 timesteps
@@ -18,7 +18,7 @@ classdef rlFixturePlanning < rl.env.MATLABEnvironment
         
         % Distance at which to fail the episode
         DisplacementThreshold = 1e-3
-        StressThreshold = 276
+        StressThreshold = 100E+9
 
         % Cumulative Displacement threshold at which to fail the epsiode
         ResidualStresses = 0;
@@ -26,7 +26,7 @@ classdef rlFixturePlanning < rl.env.MATLABEnvironment
         PenaltyForFailing = -1
 
         % Set of fixture locations
-        fixtureVertices = num2cell(generateGrid(-990, -20, 10, 180, 20, 10), 2);
+        fixtureVertices = num2cell(generateGrid(-950, -70, 50, 180, 20, 10), 2);
 
         model = loadModel('../models/front_wing_spar.stl')
         F_drill = rivetingForce(4e-3, 0, 3e+8)
@@ -79,7 +79,7 @@ classdef rlFixturePlanning < rl.env.MATLABEnvironment
             
             % Check terminal condition
             this.ResidualStresses = this.ResidualStresses + max(Stress);
-            IsDone = max(Displacement_x) > this.DisplacementThreshold || max(Displacement_z) > this.DisplacementThreshold;
+            IsDone = max(Displacement_x) > this.DisplacementThreshold || max(Displacement_z) > this.DisplacementThreshold || this.ResidualStresses > this.StressThreshold;
             this.IsDone = IsDone;
             
             % Get reward
@@ -130,15 +130,17 @@ classdef rlFixturePlanning < rl.env.MATLABEnvironment
         % Reward function
         function Reward = getReward(this, obs)
             if ~this.IsDone
-                x = obs(2);
-                z = obs(3);
+                x = obs(2)*10^6;
+                z = obs(3)*10^6;
+                a = 1;
+                b = 1;
+                c = 0;
 
-                if x < this.DisplacementThreshold && z < this.DisplacementThreshold
-                    Reward = 1;
-                else
-                    Reward = exp(-8*(xmat-0.2).^2) + exp(-8*(ymat-0.2).^2)/3;
-                end
+                r = (1./(1 + ((x-c)./a).^(2*b)) + 1./(1 + ((z-c)./a).^(2*b)))./2;
+                disp(r)
+                Reward = r;
             else
+                fprintf('Residual stress exceeded');
                 Reward = this.PenaltyForFailing;
             end          
         end
