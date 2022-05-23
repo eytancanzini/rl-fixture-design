@@ -10,7 +10,7 @@ classdef rlFixturePlanning < rl.env.MATLABEnvironment
     %% Properties (set properties' attributes accordingly)
     properties
         % Specify and initialize environment's necessary properties 
-        drillList = linspace(-950, 50, 100)
+        drillList = linspace(-990, -10, 100)
 
         % Set some parameters for timestepping
         timestep = 1 % Each hole is performed for 100 timesteps
@@ -18,7 +18,7 @@ classdef rlFixturePlanning < rl.env.MATLABEnvironment
         
         % Distance at which to fail the episode
         DisplacementThreshold = 1e-3
-        StressThreshold = 276
+        StressThreshold = 100E+9
 
         % Cumulative Displacement threshold at which to fail the epsiode
         ResidualStresses = 0;
@@ -26,7 +26,7 @@ classdef rlFixturePlanning < rl.env.MATLABEnvironment
         PenaltyForFailing = -1
 
         % Set of fixture locations
-        fixtureVertices = num2cell(generateGrid(-990, -20, 10, 180, 20, 10), 2);
+        fixtureVertices = num2cell(generateGrid(-950, -70, 50, 180, 20, 10), 2);
 
         model = loadModel('../models/front_wing_spar.stl')
         F_drill = rivetingForce(4e-3, 0, 3e+8)
@@ -45,9 +45,12 @@ classdef rlFixturePlanning < rl.env.MATLABEnvironment
         function this = rlFixturePlanning()
             
             % Initialise observation states
-            obsInfo = rlNumericSpec([1 1]);
+            obsInfo = rlNumericSpec([3 1]);
             obsInfo.Name = 'Observation States';
-            obsInfo.Description = 'Vector of observation states. Current just a single observation';
+            obsInfo.Description = ['Vector of observation states. Format is:' ...
+                '\nStress - Von Mises Stress' ...
+                '\nX Displacement - Displacement in X' ...
+                '\nZ Displacement - Displacement in Z'];
             
             % Initialize Action settings
             actInfo = rlFiniteSetSpec(linspace(1, 100, 100));
@@ -64,23 +67,23 @@ classdef rlFixturePlanning < rl.env.MATLABEnvironment
             drillingVertices = drillingVerticesGenerator(this.drillList);
             
             % Get action for this timestep
-            [Stress, Displacement] = getForce(this, Action, this.State, drillingVertices);            
+            [Stress, Displacement_x, Displacement_z] = getForce(this, Action, this.State, drillingVertices);            
             
             % Generate the observation of the system. This observes the
             % stress through the system
-            Observation = mean(Displacement);
+            Observation = [max(Stress); max(Displacement_x); max(Displacement_z)];
 
             % Update system states. This moves the drilling position to the
             % next frame along the path
             this.State = this.State+1;
             
             % Check terminal condition
-            this.ResidualStresses = this.ResidualStresses + mean(Stress);
-            IsDone = abs(mean(Observation)) > this.DisplacementThreshold || abs(this.ResidualStresses) > this.StressThreshold;
+            this.ResidualStresses = this.ResidualStresses + max(Stress);
+            IsDone = max(Displacement_x) > this.DisplacementThreshold || max(Displacement_z) > this.DisplacementThreshold || this.ResidualStresses > this.StressThreshold;
             this.IsDone = IsDone;
             
             % Get reward
-            Reward = getReward(this, Displacement);
+            Reward = getReward(this, Observation);
             
             % (optional) use notifyEnvUpdated to signal that the 
             % environment has been updated (e.g. to update visualization)
@@ -93,7 +96,7 @@ classdef rlFixturePlanning < rl.env.MATLABEnvironment
             this.State = 1;
             this.ResidualStresses = 0;
 
-            InitialObservation = 0;
+            InitialObservation = [0;0;0];
             
             % (optional) use notifyEnvUpdated to signal that the 
             % environment has been updated (e.g. to update visualization)
@@ -105,7 +108,7 @@ classdef rlFixturePlanning < rl.env.MATLABEnvironment
     methods               
         % Determine the stress and displacement from the selected action by
         % the agent
-        function [stress, displacement] = getForce(this, action, State, vertices)
+        function [stress, displacement_x, displacement_z] = getForce(this, action, State, vertices)
             if ~ismember(action,this.ActionInfo.Elements)
                 error('Action must be part of the action space specified by the component list');
             end
@@ -119,26 +122,25 @@ classdef rlFixturePlanning < rl.env.MATLABEnvironment
             structuralBoundaryLoad(temp_model, 'Vertex',fixtureVertexID, 'Force', calculateMagneticForce(0.4, 'x'));
             generateMesh(temp_model);
             results = solve(temp_model);
-            displacement = results.Displacement.z;
+            displacement_x = results.Displacement.x;
+            displacement_z = results.Displacement.z;
             stress = results.VonMisesStress;
         end
         
         % Reward function
         function Reward = getReward(this, obs)
             if ~this.IsDone
-                mu_obs = mean(obs);
-%                 std_obs = std(obs);
+                x = obs(2)*10^6;
+                z = obs(3)*10^6;
+                a = 1;
+                b = 1;
+                c = 0;
 
-%                 x = mu_obs*10000;
-%                 y = std_obs*10000;
-%                 Reward = exp(-8*x^2) + exp(-3*y);
-                if mu_obs < this.DisplacementThreshold
-                    Reward = 1;
-                else
-                    Reward = this.DisplacementThreshold/mu_obs;
-                end
-                disp(Reward)
+                r = (1./(1 + ((x-c)./a).^(2*b)) + 1./(1 + ((z-c)./a).^(2*b)))./2;
+                disp(r)
+                Reward = r;
             else
+                fprintf('Residual stress exceeded');
                 Reward = this.PenaltyForFailing;
             end          
         end

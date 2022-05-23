@@ -14,65 +14,79 @@
 model_env = rlFixturePlanning();
 
 % Create the observation and action spaces
-obsInfo = rlNumericSpec([1 1]);
+obsInfo = rlNumericSpec([3 1]);
 actInfo = rlFiniteSetSpec(linspace(1, 100, 100));
 
-% Create the critic neural network for the Q-agent
-% Create the observation path
-obsPath = [
-    featureInputLayer(1, 'Name', 'obs')
-    fullyConnectedLayer(100, 'Name', 'hiddenobs')
-    reluLayer("Name", 'reluobs')
-    fullyConnectedLayer(100, 'Name', 'fcobs')
-];
+nI = obsInfo.Dimension(1);
+nL = 24;
+nO = numel(actInfo.Elements);
 
-% Create the action path
-actPath = [
-    featureInputLayer(1, 'Name', 'act')
-    fullyConnectedLayer(100, 'Name', 'hiddenact')
-    reluLayer("Name", 'reluact')
-    fullyConnectedLayer(100, 'Name', 'fcact')
-];
+% Create a deep neural network that is used as the function approximation
+% for the Q-learning function
+dnn = [
+    featureInputLayer(nI,'Normalization','none','Name','state')
+    fullyConnectedLayer(nL,'Name','fc1')
+    reluLayer('Name','relu1')
+    fullyConnectedLayer(nL,'Name','fc2')
+    reluLayer('Name','relu2')
+    fullyConnectedLayer(nO,'Name','fc3')];
+net = dlnetwork(dnn);
 
-% Link the paths together
-joinedPath = [
-    additionLayer(2, 'Name', 'add')
-    reluLayer('Name', 'relu')
-    fullyConnectedLayer(1, 'Name', 'fc')
-];
-
-net = layerGraph(obsPath);
-net = addLayers(net, actPath);
-net = addLayers(net, joinedPath);
-
-% Connect the layers
-net = connectLayers(net, 'fcobs', 'add/in1');
-net = connectLayers(net, 'fcact', 'add/in2');
+% % Create the critic neural network for the Q-agent
+% % Create the observation path
+% obsPath = [
+%     featureInputLayer(3, 'Name', 'obs')
+%     fullyConnectedLayer(100, 'Name', 'hiddenobs')
+%     reluLayer("Name", 'reluobs')
+%     fullyConnectedLayer(100, 'Name', 'fcobs')
+% ];
+% 
+% % Create the action path
+% actPath = [
+%     featureInputLayer(1, 'Name', 'act')
+%     fullyConnectedLayer(100, 'Name', 'hiddenact')
+%     reluLayer("Name", 'reluact')
+%     fullyConnectedLayer(100, 'Name', 'fcact')
+% ];
+% 
+% % Link the paths together
+% joinedPath = [
+%     additionLayer(2, 'Name', 'add')
+%     reluLayer('Name', 'relu')
+%     fullyConnectedLayer(1, 'Name', 'fc')
+% ];
+% 
+% net = layerGraph(obsPath);
+% net = addLayers(net, actPath);
+% net = addLayers(net, joinedPath);
+% 
+% % Connect the layers
+% net = connectLayers(net, 'fcobs', 'add/in1');
+% net = connectLayers(net, 'fcact', 'add/in2');
 
 % Initialise the Q-agent
-repopts = rlRepresentationOptions( ...
-    "LearnRate", 0.001, "GradientThreshold", 1);
-opts = rlQAgentOptions( ...
+% repopts = rlRepresentationOptions( ...
+%     "LearnRate", 0.001, "GradientThreshold", 1, 'UseDevice', 'gpu');
+critic = rlVectorQValueFunction( ...
+    net, obsInfo, actInfo, ...
+    'Observation', 'state', UseDevice='gpu');
+
+opts = rlDQNAgentOptions( ...
     "DiscountFactor", 1);
 opts.EpsilonGreedyExploration.EpsilonDecay = 0.001;
-critic = rlQValueRepresentation( ...
-    net, obsInfo, actInfo, ...
-    'Observation', 'obs', 'Action', 'act', ...
-    repopts);
-
-agent = rlQAgent(critic, opts);
+agent = rlDQNAgent(critic, opts);
 
 %% Train the policy
 % The policy is trained for a certain number of episodes. In each episode,
 % the drill position is applied for a set number of iterations (here marked
-% for 10, leading to 190 timesteps). The problem is considered 'solved' if
-% the algorithm lasts until the 
+% for 100). If the residual stresses have not been exceeded, the episode
+% starts again
 
 x = "Press 'Enter' to begin training the agent";
 disp(x)
 pause
 
-opt = rlTrainingOptions(...
+opt = rlTrainingOptions(...clear
     'MaxEpisodes',10,...
     'MaxStepsPerEpisode',100,...
     'StopTrainingCriteria',"AverageReward",...
