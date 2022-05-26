@@ -11,7 +11,7 @@ import torch.optim as optim
 import torch.nn.functional as F
 
 # Parameters to import across the file
-MAX_EPISODES = 20
+MAX_EPISODES = 500
 MAX_ITERATIONS = 200
 DEVICE = torch.device("cpu")
 BATCH_SIZE = 128
@@ -64,6 +64,7 @@ class DQN(nn.Module):
         super(DQN, self).__init__()
         self.l_input = nn.Linear(inputs, 32)
         self.hidden_1 = nn.Linear(32, 32)
+        self.hidden_2 = nn.Linear(32, 32)
         self.l_output = nn.Linear(32, outputs)
         
     def forward(self, x):
@@ -71,6 +72,8 @@ class DQN(nn.Module):
         x = self.l_input(x)
         x = F.relu(x)
         x = self.hidden_1(x)
+        x = F.relu(x)
+        x = self.hidden_2(x)
         x = F.relu(x)
         return self.l_output(x)
     
@@ -86,6 +89,10 @@ target_net.load_state_dict(policy_net.state_dict())
 # Initialise the memory and optimisers
 memory = ReplayMemory(1000)
 optimizer = optim.RMSprop(policy_net.parameters())
+
+def select_model_action(state):
+    with torch.no_grad():
+        return policy_net(state).max(0)[1].view(1,1)
         
         
 def select_action(state):
@@ -110,14 +117,14 @@ def optimise_model():
     
     state_batch = torch.cat(batch.state)
     action_batch = torch.cat(batch.action)
-    reward = torch.cat(batch.reward)
+    reward_batch = torch.cat(batch.reward)
     
     # Compute Q(s_t, a) for the model. 
-    state_action_values = policy_net(state_batch).gather(1, action_batch)
+    state_action_values = policy_net(state_batch.view(-1,4)).gather(1, action_batch)
     
     # Compute V(s_{t+1}) for all the next states
     next_state_values = torch.zeros(BATCH_SIZE, device=DEVICE)
-    next_state_values[non_final_mask] = target_net(non_final_next_states).max(1)[0].detach()
+    next_state_values[non_final_mask] = target_net(non_final_next_states.view(-1,4)).max(1)[0].detach()
     
     # Compute the expected Q values
     expected_state_action_values = (next_state_values * GAMMA) + reward_batch
@@ -177,7 +184,22 @@ def main():
         if i_episode & TARGET_UPDATE == 0:
             target_net.load_state_dict(policy_net.state_dict())
         
-    print("Finished training")  
+    print("Finished training")
+    env.reset()
+
+    for idx in range(15):
+        observation = env.reset()
+        for t in range(MAX_ITERATIONS):
+            env.render()
+            state = torch.from_numpy(observation)
+            action = select_model_action(state)
+            observation, reward, done, info = env.step(action.item())
+            
+            if done:
+                print(observation)
+                print(f"Epsiode finished after {t+1} timesteps")
+                break
+    env.close()
     
 
 if __name__ == "__main__":
