@@ -127,3 +127,5 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+Python/notebooks/reinforcement_q_learning.ipynb
