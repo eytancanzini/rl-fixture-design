@@ -11,7 +11,7 @@ import torch.optim as optim
 import torch.nn.functional as F
 
 # Parameters to import across the file
-MAX_EPISODES = 100
+MAX_EPISODES = 300
 MAX_ITERATIONS = 200
 DEVICE = torch.device("cpu")
 BATCH_SIZE = 128
@@ -203,4 +203,5 @@ def main():
     
 
 if __name__ == "__main__":
+    print(f"Using device {DEVICE}")
     main()
