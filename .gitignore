@@ -129,3 +129,4 @@ dmypy.json
 .pyre/
 
 Python/notebooks/reinforcement_q_learning.ipynb
+Python/checkpoints
