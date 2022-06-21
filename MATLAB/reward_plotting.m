@@ -25,4 +25,4 @@ yh = get(gca,'YLabel'); % Handle of the y label
 set(yh, 'Units', 'Normalized')
 pos = get(yh, 'Position');
 set(yh, 'Position',pos.*[1,0.1,1],'Rotation',-10)
-saveas(gcf, './images/reward_surface.eps', 'epsc')
+% saveas(gcf, './images/reward_surface.eps', 'epsc')
