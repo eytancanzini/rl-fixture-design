@@ -11,11 +11,7 @@ import torch.optim as optim
 import torch.nn.functional as F
 
 # Parameters to import across the file
-<<<<<<< HEAD
 MAX_EPISODES = 500
-=======
-MAX_EPISODES = 300
->>>>>>> 1058a4ab7ceb96320d0081f9697f567afa954678
 MAX_ITERATIONS = 200
 DEVICE = torch.device("cpu")
 BATCH_SIZE = 128
