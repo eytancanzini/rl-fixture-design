@@ -21,7 +21,7 @@ drillList = linspace(-990, -10, 100);
 
 figure(2)
 pdegplot(model, "VertexLabels","on")
-saveas(gcf, './images/pde_model.eps', 'epsc')
+saveas(gcf, './images/pde_model.png')
 
 
 
