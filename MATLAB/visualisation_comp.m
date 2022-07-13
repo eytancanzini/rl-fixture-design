@@ -20,7 +20,7 @@ drillList = linspace(-990, -10, 100);
 % saveas(gcf, './images/fixture_vertices.eps', 'epsc')
 
 figure(2)
-pdegplot(model, "VertexLabels","on")
+pdegplot(model, "VertexLabels","on", "FaceLabels","on")
 saveas(gcf, './images/pde_model.png')
 
 

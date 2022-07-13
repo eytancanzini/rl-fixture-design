@@ -160,7 +160,7 @@ class FixtureBandit(gym.env):
     
     def _get_observation(self, action, context):
         """
-        Calls the ABAQUS API to calculate the various n-dimensional forces and the stresses due to the contexts and the actions (TODO: NEEDS TO BE WRITTEN INTO THE API)
+        Calls the MATLAB function and receives the deformation from the MATLAB script (TODO: Create the MATLAB script)
 
         Args:
             action (np.ndarray): Action locator that is provided as coordinates
