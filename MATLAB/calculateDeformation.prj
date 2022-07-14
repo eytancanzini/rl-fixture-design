@@ -7,7 +7,7 @@
     <param.authnamewatermark>Ethan Canzini</param.authnamewatermark>
     <param.email>ecanzini1@sheffield.ac.uk</param.email>
     <param.company>University of Sheffield</param.company>
-    <param.summary>Function that calculates the deformation and stresses due to the placement of fixtures</param.summary>
+    <param.summary />
     <param.description />
     <param.screenshot />
     <param.guid />
@@ -73,6 +73,7 @@ For details, see GettingStarted.html, distributed with this package, or the offi
       <param.icon />
       <param.icons />
       <param.version />
+      <param.summary />
       <param.description />
       <param.screenshot />
       <param.guid />
@@ -127,7 +128,9 @@ For details, see GettingStarted.html, distributed with this package, or the offi
       <file>${PROJECT_ROOT}/multiPointForce.m</file>
     </fileset.depfun>
     <fileset.package />
-    <fileset.examples />
+    <fileset.examples>
+      <file>${PROJECT_ROOT}/calculateDeformationSample1.m</file>
+    </fileset.examples>
     <fileset.documentation />
     <build-deliverables>
       <file location="${PROJECT_ROOT}/calculateDeformation/for_testing" name="setup.py" optional="false">/home/ethan/Documents/Projects/rl-fixture-design/MATLAB/calculateDeformation/for_testing/setup.py</file>
