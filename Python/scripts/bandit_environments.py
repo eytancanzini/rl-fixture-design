@@ -6,6 +6,8 @@ from tf_agents.trajectories import time_step as ts
 import gym
 from gym import spaces, utils, error
 from sympy import symbols
+import matlab
+import calculateDeformation
 
 class BanditEnvironment(py_environment.PyEnvironment):
     
@@ -95,11 +97,11 @@ class FixtureBandit(gym.env):
             actions (np.ndarray): Array of actions that translate into positions for the fixtures
         """
         low = np.array([
-            0,0,0,0
+            0,0
         ]).astype(np.float32)
         
         high = np.array([
-            10, 10, 10, 100
+            10, 10
         ]).astype(np.float32)
         
         self.viewer = None
@@ -160,7 +162,7 @@ class FixtureBandit(gym.env):
     
     def _get_observation(self, action, context):
         """
-        Calls the MATLAB function and receives the deformation from the MATLAB script (TODO: Create the MATLAB script)
+        Calls the MATLAB function and receives the deformation from the MATLAB script
 
         Args:
             action (np.ndarray): Action locator that is provided as coordinates
@@ -169,7 +171,18 @@ class FixtureBandit(gym.env):
         Returns:
             np.ndarray: N-dimensional array of the deformations and residual stresses of the component
         """
-        return np.random.randint(low=0, high=10, size=4)
+        
+        my_calculate = calculateDeformation.initialize()
+        fixture_pos = matlab.double(action, size=(1,3))
+        drill_pos = matlab.double(context, size(1, 3))
+        
+        z_out, x_out = my_calculate.calculateDeformation(fixture_pos, drill_pos, nargout=2)
+        
+        
+        return np.append(
+            np.asarray(z_out),
+            np.asarray(x_out),
+            axis=1)
     
     def _get_reward(self, observation=None):
         """
@@ -184,8 +197,8 @@ class FixtureBandit(gym.env):
         if observation == None:
             return 0
         else:
-            x = observation[0]
-            z = observation[2]
+            x = max(observation[:,0])
+            z = max(observation[:,1])
             
             R = (1/(1 + ((self.xvec-self.c)/self.a)**(2*self.b)) + 1/(1 + ((self.zvec-self.c)/self.a)**(2*self.b)))/2
             return np.array(R.subs(self.xvec, x).subs(self.zvec, z)).astype(np.float32)
