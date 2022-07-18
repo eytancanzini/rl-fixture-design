@@ -86,7 +86,7 @@ class SimplePyEnvironment(BanditEnvironment):
         return action * self._observation
     
     
-class FixtureBandit(gym.env):
+class FixtureBandit(gym.Env):
     
     def __init__(self, contexts, actions):
         """
@@ -96,6 +96,7 @@ class FixtureBandit(gym.env):
             contexts (np.ndarray): Array of contexts that define the drilling positions 
             actions (np.ndarray): Array of actions that translate into positions for the fixtures
         """
+        assert type(contexts) is np.ndarray and type(actions) is np.ndarray
         low = np.array([
             0,0
         ]).astype(np.float32)
