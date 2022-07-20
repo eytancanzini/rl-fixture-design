@@ -179,6 +179,7 @@ class FixtureBandit(gym.Env):
         
         z_out, x_out = my_calculate.calculateDeformation(fixture_pos, drill_pos, nargout=2)
         
+        my_calculate.terminate()
         
         return np.append(
             np.asarray(z_out),
